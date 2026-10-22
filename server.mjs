@@ -48,6 +48,17 @@ const port = Number(process.env.PORT || 8787);
 
 http
   .createServer(async (req, res) => {
+    if (req.url === "/view.html") {
+      res.writeHead(200, { "content-type": "text/html" });
+      return res.end(fs.readFileSync(new URL("./public/view.html", import.meta.url)));
+    }
+    if (req.url.split("?")[0] === "/face.glb") {
+      const cors = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, HEAD, OPTIONS", "access-control-allow-headers": "*" };
+      if (req.method === "OPTIONS") return res.writeHead(204, cors).end();
+      const buf = fs.readFileSync(new URL("./public/face.glb", import.meta.url));
+      res.writeHead(200, { ...cors, "content-type": "model/gltf-binary", "content-length": buf.length, "cache-control": "public, max-age=300" });
+      return res.end(req.method === "HEAD" ? undefined : buf);
+    }
     const chunks = [];
     for await (const c of req) chunks.push(c);
     const proto = req.headers["x-forwarded-proto"] || "http";
